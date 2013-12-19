@@ -177,6 +177,11 @@ function(hljs) {
     begin: /@\{?[a-zA-Z0-9_-]*\}?/,
     relevance: 2,
   }
+  less.ESCAPED_VALUE = {
+    className: 'string',
+    begin: /~('|")/, end: /('|")/,
+    relevance: 2
+  }
   less.EXTEND = {
     className: 'pseudo',
     begin: /:extend\(/, end: /\)/,
@@ -218,11 +223,6 @@ function(hljs) {
         relevance: 0
       }
     ]
-  }
-  less.ESCAPED_VALUE = {
-    className: 'string',
-    begin: /~('|")/, end: /('|")/,
-    relevance: 2
   }
   less.FUNCTION = {
     begin: '(escape|e|%|unit|color|data-uri|' +
