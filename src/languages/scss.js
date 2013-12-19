@@ -3,6 +3,300 @@ Language: SCSS
 Author: Kurt Emch <kurt@kurtemch.com>
 */
 function(hljs) {
+  var css = {}
+  css.COLOR_HEX = {
+    className: 'hexcolor', begin: /#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/, relevance: 0
+  }
+  css.COLOR_KEYWORD = { // it'd be nice to include it in CSS and SCSS, too, imo
+    beginWithKeyword: true,
+    relevance: 0,
+    keywords: {
+      color:
+        'AliceBlue AntiqueWhite Aqua Aquamarine Azure Beige Bisque Black BlanchedAlmond Blue ' +
+        'BlueViolet Brown BurlyWood CadetBlue Chartreuse Chocolate Coral CornflowerBlue Cornsilk ' +
+        'Crimson Cyan DarkBlue DarkCyan DarkGoldenrod DarkGray DarkGreen DarkKhaki DarkMagenta ' +
+        'DarkOliveGreen DarkOrange DarkOrchid DarkRed DarkSalmon DarkSeaGreen DarkSlateBlue ' +
+        'DarkSlateGray DarkTurquoise DarkViolet DeepPink DeepSkyBlue DimGray DodgerBlue FireBrick ' +
+        'FloralWhite ForestGreen Fuchsia Gainsboro GhostWhite Gold Goldenrod Gray Green GreenYellow ' +
+        'Honeydew HotPink IndianRed Indigo Ivory Khaki Lavender LavenderBlush LawnGreen LemonChiffon ' +
+        'LightBlue LightCoral LightCyan LightGoldenrodYellow LightGreen LightGrey LightPink ' +
+        'LightSalmon LightSeaGreen LightSkyBlue LightSlateGray LightSteelBlue LightYellow Lime ' +
+        'LimeGreen Linen Magenta Maroon MediumAquamarine MediumBlue MediumOrchid MediumPurple ' +
+        'MediumSeaGreen MediumSlateBlue MediumSpringGreen MediumTurquoise MediumVioletRed ' +
+        'MidnightBlue MintCream MistyRose Moccasin NavajoWhite Navy OldLace Olive OliveDrab Orange ' +
+        'OrangeRed Orchid PaleGoldenrod PaleGreen PaleTurquoise PaleVioletRed PapayaWhip PeachPuff ' +
+        'Peru Pink Plum PowderBlue Purple Red RosyBrown RoyalBlue SaddleBrown Salmon SandyBrown ' +
+        'SeaGreen Seashell Sienna Silver SkyBlue SlateBlue SlateGray Snow SpringGreen SteelBlue Tan ' +
+        'Teal Thistle Tomato Turquoise Violet Wheat White WhiteSmoke Yellow YellowGreen' +
+        'aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue ' +
+        'blueviolet brown burlywood cadetblue chartreuse chocolate coral cornflowerblue cornsilk ' +
+        'crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkkhaki darkmagenta ' +
+        'darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue ' +
+        'darkslategray darkturquoise darkviolet deeppink deepskyblue dimgray dodgerblue firebrick ' +
+        'floralwhite forestgreen fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow ' +
+        'honeydew hotpink indianred indigo ivory khaki lavender lavenderblush lawngreen lemonchiffon ' +
+        'lightblue lightcoral lightcyan lightgoldenrodyellow lightgreen lightgrey lightpink ' +
+        'lightsalmon lightseagreen lightskyblue lightslategray lightsteelblue lightyellow lime ' +
+        'limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple ' +
+        'mediumseagreen mediumslateblue mediumspringgreen mediumturquoise mediumvioletred ' +
+        'midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive olivedrab orange ' +
+        'orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff ' +
+        'peru pink plum powderblue purple red rosybrown royalblue saddlebrown salmon sandybrown ' +
+        'seagreen seashell sienna silver skyblue slateblue slategray snow springgreen steelblue tan ' +
+        'teal thistle tomato turquoise violet wheat white whitesmoke yellow yellowgreen'
+    }
+  }
+  css.FUNCTION = {
+    className: 'function',
+    begin: /[a-zA-Z-][a-zA-Z0-9_-]*\(/, end: /\)/,
+    relevance: 0,
+    contains: [
+      'self',
+      hljs.NUMBER_MODE,
+      hljs.APOS_STRING_MODE,
+      hljs.QUOTE_STRING_MODE,
+      css.COLOR_KEYWORD,
+      css.COLOR_HEX
+    ]
+  }
+  css.AT_RULE = {
+    className: 'at_rule',
+    begin: /@(charset|font-face|import|keyframes|media|namespace|page|region|supports|viewport)/, end: /[{;]/,
+    lexemes: '[a-z-]+(\s[a-z-+])?',
+    keywords: 'charset font-face import keyframes media namespace page region supports viewport',
+    relevance: 0,
+    contains: [
+      hljs.NUMBER_MODE,
+      hljs.APOS_STRING_MODE,
+      hljs.QUOTE_STRING_MODE,
+      {
+        begin: /\s/, endsWithParent: true, excludeEnd: true,
+        keywords: {
+          operator: 'and not',
+          option: 'inline reference less' // I'm not sure what to call these. At lesscss.org they're
+                                          // called options, so that's what I'm calling them, but if
+                                          // there is a css class already in Highlight.js that works
+                                          // better, we should use that.
+        },
+        contains: [
+          hljs.APOS_STRING_MODE,
+          hljs.QUOTE_STRING_MODE,
+          hljs.NUMBER_MODE,
+          css.FUNCTION
+        ]
+      }
+    ]
+  }
+  css.VALUE = {
+    className: 'value',
+    endsWithParent: true, excludeEnd: true,
+    relevance: 0,
+    contains: [
+      // less.VARIABLE will be defined and added here later
+      // less.FUNCTION will be defined and added here later
+      // less.ESCAPED_VALUE will be defined and added here later
+      css.FUNCTION,
+      hljs.NUMBER_MODE,
+      hljs.QUOTE_STRING_MODE,
+      hljs.APOS_STRING_MODE,
+      hljs.C_BLOCK_COMMENT_MODE,
+      css.COLOR_HEX,
+      { className: 'important', begin: '!important' }
+    ]
+  }
+  css.PROPERTY = {
+    begin: /[a-z-+]+:/, end: /[;{}]/,
+    returnBegin: true, endsWithParent: true, excludeEnd: true,
+    relevance: 0,
+    contains: [
+      { // I really think CSS, LESS, and SCSS should use 'property' instead of 'attribute'
+        className: 'attribute',
+        begin: /\S[a-z-]/, end: /(\+?:)\s*/,
+        excludeEnd: true,
+        relevance: 0,
+        starts: css.VALUE
+      },
+      hljs.NUMBER_MODE,
+      hljs.APOS_STRING_MODE,
+      hljs.QUOTE_STRING_MODE
+    ]
+  }
+  css.SELECTOR = {
+    begin: /([.#&@[]{1}||:{1,2})?[a-zA-Z-]/, end: /\{/,
+    returnBegin: true, endsWithParent: true, excludeEnd: true,
+    relevance: 0,
+    contains: [
+      {
+        className: 'class',
+        begin: /\.[a-zA-Z-][a-zA-Z0-9_-]*/, end: /[&,\s.#@[:]/,
+        endsWithParent: true, returnEnd: true,
+        relevance: 0
+      },
+      {
+        className: 'id',
+        begin: /\#[a-zA-Z-][a-zA-Z0-9_-]*/, end: /[&,\s.#@[:]/,
+        endsWithParent: true, returnEnd: true,
+        relevance: 0
+      },
+      {
+        className: 'attr_selector',
+        begin: /\[/, end: /\]/,
+        endsWithParent: true,
+        relevance: 0,
+        contains: [
+          hljs.APOS_STRING_MODE,
+          hljs.QUOTE_STRING_MODE,
+        ]
+      },
+      {
+        className: 'pseudo',
+        begin: /:(:)?[a-zA-Z0-9\_\-\+\(\)\"\']+/, end: /[&,\s.#@[:]/,
+        endsWithParent: true, returnEnd: true,
+        relevance: 0,
+        contains: [
+          hljs.NUMBER_MODE,
+          hljs.APOS_STRING_MODE,
+          hljs.QUOTE_STRING_MODE,
+        ]
+      },
+      {
+        className: 'tag',
+        begin: /[a-zA-Z][a-zA-Z0-9]*/, end: /[&,\s.#@[:]/,
+        endsWithParent: true, returnEnd: true,
+        relevance: 0
+      }
+    ]
+  }
+  var scss = {}
+  scss.VARIABLE = {
+    className: 'variable',
+    begin: /\$[a-zA-Z0-9_-]*/,
+    relevance: 10
+  }
+  scss.FUNCTION = {
+    begin: '(escape|e|%|unit|color|data-uri|' +
+      'ceil|floor|percentage|round|sqrt|abs|sin|asin|cos|acos|tan|atan|pi|pow|mod|convert|unit|' + // math
+      'rgb|rgba|argb|hsl|hsla|hsv|hsva|hue|saturation|lightness|hsvhue|hsvsaturation|hsvvalue|' + // color
+      'red|green|blue|alpha|luma|saturate|desaturate|lighten|darken|fadein|fadeout|fade|spin|' +
+      'mix|tint|shade|greyscale|contrast|multiply|' +
+      'iscolor|isnumber|isstring|iskeyword|isurl|ispixel|ispercentage|isem|isunit)\\(', end: '\\)', // type
+    lexemes: '[a-z-\\%]+',
+    keywords: {
+      built_in: 'escape e % unit color data-uri ' + // math
+      'ceil floor percentage round sqrt abs sin asin cos acos tan atan pi pow mod convert unit ' + // color
+      'rgb rgba argb hsl hsla hsv hsva hue saturation lightness hsvhue hsvsaturation hsvvalue ' +
+      'red green blue alpha luma saturate desaturate lighten darken fadein fadeout fade spin ' +
+      'mix tint shade greyscale contrast multiply ' +
+      'iscolor isnumber isstring iskeyword isurl ispixel ispercentage isem isunit', // type
+    },
+    contains: [
+      'self',
+      hljs.NUMBER_MODE,
+      hljs.APOS_STRING_MODE,
+      hljs.QUOTE_STRING_MODE,
+      scss.VARIABLE,
+      css.COLOR_KEYWORD,
+      css.COLOR_HEX
+    ]
+  }
+  scss.MIX_IN = {
+    className: 'at_rule',
+    begin: /@(mixin|include)/, end: /[{;]/,
+    excludeEnd: true,
+    lexemes: '[a-z-]+\s',
+    keywords: 'mixin include',
+    relevance: 10,
+    contains: [
+      hljs.NUMBER_MODE,
+      hljs.APOS_STRING_MODE,
+      hljs.QUOTE_STRING_MODE,
+      {
+        className: 'preprocessor',
+        begin: /[a-zA-Z0-9-_]+/, endsWithParent: true, returnEnd: true,
+        starts: {
+          begin: /\(/, end: /\)/, // parameters (maybe use `.hljs-params`?)
+          contains: [
+            scss.VARIABLE,
+            scss.FUNCTION,
+            {
+              className: 'value', // represents the default value
+              begin: /:/, end: /[,)]/,
+              excludeBegin: true, endsWithParent: true, excludeEnd: true,
+              contains: [
+                hljs.NUMBER_MODE,
+                hljs.APOS_STRING_MODE,
+                hljs.QUOTE_STRING_MODE,
+                css.COLOR_HEX,
+                css.COLOR_KEYWORD,
+              ]
+            }
+          ]
+        },
+        contains: [
+          scss.VARIABLE
+        ]
+      }
+    ]
+  }
+  scss.EXTEND = {
+    className: 'at_rule',
+    begin: /@(extend)/, end: /;/,
+    excludeEnd: true,
+    lexemes: '[a-z-]+',
+    keywords: 'extend',
+    relevance: 10,
+    contains: [
+      css.SELECTOR
+    ]
+  }
+  scss.DIRECTIVE = {
+    className: 'at_rule',
+    begin: /@(for|if|else|each|while|function)(\sif)?/, end: /[{;]/,
+    excludeEnd: true,
+    lexemes: '[a-z-]+',
+    keywords: 'for if else each while function',
+    relevance: 10,
+    contains: [
+      hljs.NUMBER_MODE,
+      hljs.APOS_STRING_MODE,
+      hljs.QUOTE_STRING_MODE,
+      {
+        className: 'preprocessor',
+        begin: /\s[a-zA-Z0-9-_]+/, end: /\(/, endsWithParent: true, returnEnd: true,
+        starts: {
+          begin: /\(/, end: /\)/,
+          contains: [
+            scss.VARIABLE,
+            {
+              className: 'value', // represents the default value
+              begin: /:/, end: /[,)]/,
+              excludeBegin: true, endsWithParent: true, excludeEnd: true,
+              contains: [
+                hljs.NUMBER_MODE,
+                hljs.APOS_STRING_MODE,
+                hljs.QUOTE_STRING_MODE,
+                css.COLOR_HEX,
+                css.COLOR_KEYWORD,
+              ]
+            }
+          ]
+        },
+        contains: [
+          hljs.NUMBER_MODE,
+          hljs.APOS_STRING_MODE,
+          hljs.QUOTE_STRING_MODE,
+          css.FUNCTION
+        ]
+      }
+    ]
+  }
+  
+  
+  // Allow the CSS to contain the previously undeclared but necessary LESS stuff.
+  css.FUNCTION.contains.push(scss.VARIABLE)
+  css.VALUE.contains.unshift(/* less.ESCAPED_VALUE, less.FUNCTION, */ scss.VARIABLE)
+  css.SELECTOR.contains.unshift(scss.VARIABLE)
+  
   var IDENT_RE = '[a-zA-Z-][a-zA-Z0-9_-]*';
   var FUNCTION = {
     className: 'function',
@@ -39,11 +333,31 @@ function(hljs) {
     contains: [
       hljs.C_LINE_COMMENT_MODE,
       hljs.C_BLOCK_COMMENT_MODE,
+      
+      { className: 'important', begin: '!important' },
+      
+      css.COLOR_HEX,
+      css.COLOR_KEYWORD,
+      
+      scss.VARIABLE,
+      scss.FUNCTION,
+      
+      css.AT_RULE,
+      scss.MIX_IN,
+      scss.EXTEND,
+      scss.DIRECTIVE,
+      
+/*
       {
         className: 'function',
         begin: IDENT_RE + '\\(', end: '\\)',
         contains: ['self', hljs.NUMBER_MODE, hljs.APOS_STRING_MODE, hljs.QUOTE_STRING_MODE]
       },
+*/
+      
+      //css.SELECTOR,
+      css.PROPERTY,
+/*
       {
         className: 'id', begin: '\\#[A-Za-z0-9_-]+',
         relevance: 0
@@ -79,6 +393,8 @@ function(hljs) {
         className: 'value',
         begin: '\\b(whitespace|wait|w-resize|visible|vertical-text|vertical-ideographic|uppercase|upper-roman|upper-alpha|underline|transparent|top|thin|thick|text|text-top|text-bottom|tb-rl|table-header-group|table-footer-group|sw-resize|super|strict|static|square|solid|small-caps|separate|se-resize|scroll|s-resize|rtl|row-resize|ridge|right|repeat|repeat-y|repeat-x|relative|progress|pointer|overline|outside|outset|oblique|nowrap|not-allowed|normal|none|nw-resize|no-repeat|no-drop|newspaper|ne-resize|n-resize|move|middle|medium|ltr|lr-tb|lowercase|lower-roman|lower-alpha|loose|list-item|line|line-through|line-edge|lighter|left|keep-all|justify|italic|inter-word|inter-ideograph|inside|inset|inline|inline-block|inherit|inactive|ideograph-space|ideograph-parenthesis|ideograph-numeric|ideograph-alpha|horizontal|hidden|help|hand|groove|fixed|ellipsis|e-resize|double|dotted|distribute|distribute-space|distribute-letter|distribute-all-lines|disc|disabled|default|decimal|dashed|crosshair|collapse|col-resize|circle|char|center|capitalize|break-word|break-all|bottom|both|bolder|bold|block|bidi-override|below|baseline|auto|always|all-scroll|absolute|table|table-cell)\\b'
       },
+*/
+/*
       {
         className: 'value',
         begin: ':', end: ';',
@@ -92,6 +408,8 @@ function(hljs) {
           }
         ]
       },
+*/
+/*
       {
         className: 'at_rule',
         begin: '@', end: '[{;]',
@@ -109,6 +427,7 @@ function(hljs) {
           }
         ]
       }
+*/
     ]
   };
 }
