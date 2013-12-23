@@ -45,6 +45,8 @@
   <link rel="alternate stylesheet" title="Atelier Lakeside - Light" href="styles/atelier-lakeside.light.css">
   <link rel="alternate stylesheet" title="Atelier Seaside - Dark" href="styles/atelier-seaside.dark.css">
   <link rel="alternate stylesheet" title="Atelier Seaside - Light" href="styles/atelier-seaside.light.css">
+  <link rel="alternate stylesheet" title="Paraíso - Dark" href="styles/paraiso.dark.css">
+  <link rel="alternate stylesheet" title="Paraíso - Light" href="styles/paraiso.light.css">
 
   <style>
     body {
@@ -110,7 +112,7 @@
 
   <script src="../build/highlight.pack.js"></script>
   <script>
-  hljs.tabReplace = '    ';
+  hljs.configure({tabReplace: '    '});
   hljs.initHighlightingOnLoad();
   </script>
 
@@ -311,33 +313,40 @@ POD till the end of file
     <td class="php">
 <pre><code>require_once 'Zend/Uri/Http.php';
 
-abstract class URI extends BaseURI
-{
-  abstract function test();
+namespace Location\Web;
 
-  /**
-   * Returns a URI
-   *
-   * @return  URI
-   */
-  static public function _factory($stats = array(), $uri = 'http')
-  {
-      echo __METHOD__;
-      $uri = explode(':', $uri, 0b10);
-      $schemeSpecific = isset($uri[1]) ? $uri[1] : '';
-      $desc = 'Multi
+interface Factory
+{
+    static function _factory();
+}
+
+abstract class URI extends BaseURI implements Factory
+{
+    abstract function test();
+
+    /**
+     * Returns a URI
+     *
+     * @return URI
+     */
+    static public function _factory($stats = array(), $uri = 'http')
+    {
+        echo __METHOD__;
+        $uri = explode(':', $uri, 0b10);
+        $schemeSpecific = isset($uri[1]) ? $uri[1] : '';
+        $desc = 'Multi
 line description';
 
-      // Security check
-      if (!ctype_alnum($scheme)) {
-          throw new Zend_Uri_Exception('Illegal scheme');
-      }
+        // Security check
+        if (!ctype_alnum($scheme)) {
+            throw new Zend_Uri_Exception('Illegal scheme');
+        }
 
-      return [
-        'uri' => $uri,
-        'value' => null,
-      ];
-  }
+        return [
+            'uri'   => $uri,
+            'value' => null,
+        ];
+    }
 }
 
 __halt_compiler () ; datahere
@@ -511,7 +520,7 @@ func main() {
 <pre>
 <code># hello world
 
-you can write text [with links](http://example.com).
+you can write text [with links](http://example.com) inline or [link references][1].
 
 * one _thing_ has *em*phasis
 * two __things__ are **bold**
@@ -529,6 +538,8 @@ hello world
 
 1. one thing (yeah!)
 2. two thing `i can write code`, and `more` wipee!
+
+[1]: http://example.com
 </code></pre>
 
 	<tr>
@@ -2772,6 +2783,14 @@ label1:
 return
 </code></pre>
 
+  <tr>
+    <th>FIX
+    <td class="fix">
+<pre>
+<code>8=FIX.4.2␁9=0␁35=8␁49=SENDERTEST␁56=TARGETTEST␁34=00000001526␁52=20120429-13:30:08.137␁1=ABC12345␁11=2012abc1234␁14=100␁17=201254321␁20=0␁30=NYSE␁31=108.20␁32=100␁38=100␁39=2␁40=1␁47=A␁54=5␁55=BRK␁59=2␁60=20120429-13:30:08.000␁65=B␁76=BROKER␁84=0␁100=NYSE␁111=100␁150=2␁151=0␁167=CS␁377=N␁10000=SampleCustomTag␁10=123␁
+
+8=FIX.4.29=035=849=SENDERTEST56=TARGETTEST34=0000000152652=20120429-13:30:08.1371=ABC1234511=2012abc123414=10017=20125432120=030=NYSE31=108.2032=10038=10039=240=147=A54=555=BRK59=260=20120429-13:30:08.00065=B76=BROKER84=0100=NYSE111=100150=2151=0167=CS377=N10000=SampleCustomTag10=123
+</code></pre>
 </table>
 
 <script>

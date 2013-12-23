@@ -31,15 +31,14 @@ function(hljs) {
   };
   return {
     case_insensitive: true,
-    lexemes: hljs.UNDERSCORE_IDENT_RE,
     keywords:
       'and include_once list abstract global private echo interface as static endswitch ' +
       'array null if endwhile or const for endforeach self var while isset public ' +
       'protected exit foreach throw elseif include __FILE__ empty require_once do xor ' +
-      'return implements parent clone use __CLASS__ __LINE__ else break print eval new ' +
+      'return parent clone use __CLASS__ __LINE__ else break print eval new ' +
       'catch __METHOD__ case exception default die require __FUNCTION__ ' +
-      'enddeclare final try this switch continue endfor endif declare unset true false ' +
-      'namespace trait goto instanceof insteadof __DIR__ __NAMESPACE__ ' +
+      'enddeclare final try switch continue endfor endif declare unset true false ' +
+      'trait goto instanceof insteadof __DIR__ __NAMESPACE__ ' +
       'yield finally',
     contains: [
       hljs.C_LINE_COMMENT_MODE,
@@ -69,8 +68,7 @@ function(hljs) {
       VARIABLE,
       {
         className: 'function',
-        beginWithKeyword: true, end: /[;{]/,
-        keywords: 'function',
+        beginKeywords: 'function', end: /[;{]/,
         illegal: '\\$|\\[|%',
         contains: [
           TITLE,
@@ -89,17 +87,24 @@ function(hljs) {
       },
       {
         className: 'class',
-        beginWithKeyword: true, end: '{',
-        keywords: 'class',
+        beginKeywords: 'class interface', end: '{',
         illegal: '[:\\(\\$]',
         contains: [
           {
-            beginWithKeyword: true, endsWithParent: true,
-            keywords: 'extends',
-            contains: [TITLE]
+            beginKeywords: 'extends implements',
+            relevance: 10
           },
           TITLE
         ]
+      },
+      {
+        beginKeywords: 'namespace', end: ';',
+        illegal: /[\.']/,
+        contains: [TITLE]
+      },
+      {
+        beginKeywords: 'use', end: ';',
+        contains: [TITLE]
       },
       {
         begin: '=>' // No markup, just a relevance booster

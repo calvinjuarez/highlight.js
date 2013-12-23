@@ -26,21 +26,17 @@ function(hljs) {
   var SUBST = {
     className: 'subst',
     begin: '[$@]\\{', end: '\\}',
-    keywords: PERL_KEYWORDS,
-    relevance: 10
+    keywords: PERL_KEYWORDS
+  };
+  var METHOD = {
+    begin: '->{', end: '}'
+    // contains defined later
   };
   var VAR = {
     className: 'variable',
     variants: [
       {begin: '\\$\\d'},
       {begin: '[\\$\\%\\@\\*](\\^\\w\\b|#\\w+(\\:\\:\\w+)*|[^\\s\\w{]|{\\w+}|\\w+(\\:\\:\\w*)*)'}
-    ]
-  };
-  var METHOD = {
-    begin: '->',
-    contains: [
-      {begin: hljs.IDENT_RE},
-      {begin: '{', end: '}'}
     ]
   };
   var COMMENT = {
@@ -136,8 +132,7 @@ function(hljs) {
     },
     {
       className: 'sub',
-      beginWithKeyword: true, end: '(\\s*\\(.*?\\))?[;{]',
-      keywords: 'sub',
+      beginKeywords: 'sub', end: '(\\s*\\(.*?\\))?[;{]',
       relevance: 5
     },
     {
@@ -147,7 +142,7 @@ function(hljs) {
     }
   ];
   SUBST.contains = PERL_DEFAULT_CONTAINS;
-  METHOD.contains[1].contains = PERL_DEFAULT_CONTAINS;
+  METHOD.contains = PERL_DEFAULT_CONTAINS;
 
   return {
     keywords: PERL_KEYWORDS,

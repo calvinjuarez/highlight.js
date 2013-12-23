@@ -71,7 +71,7 @@ function(hljs) {
       {
         className: 'import',
         begin: '\\bimport\\b', end: '$',
-        keywords: 'import qualified as hiding',
+        keywords: 'import|0 qualified as hiding',
         contains: [LIST, COMMENT],
         illegal: '\\W\\.|;'
       },
@@ -90,14 +90,12 @@ function(hljs) {
       },
       {
         className: 'default',
-        beginWithKeyword: true, end: '$',
-        keywords: 'default',
+        beginKeywords: 'default', end: '$',
         contains: [CONSTRUCTOR, LIST, COMMENT]
       },
       {
         className: 'infix',
-        beginWithKeyword: true, end: '$',
-        keywords: 'infix infixl infixr',
+        beginKeywords: 'infix infixl infixr', end: '$',
         contains: [hljs.C_NUMBER_MODE, COMMENT]
       },
       {
@@ -124,7 +122,7 @@ function(hljs) {
       hljs.QUOTE_STRING_MODE,
       hljs.C_NUMBER_MODE,
       CONSTRUCTOR,
-      { className: 'title', begin: '^[_a-z][\\w\']*' },
+      { className: 'title', begin: '^[_a-z][\\w\']*', relevance: 0 },
 
       {begin: '->|<-'} // No markup, relevance booster
     ]

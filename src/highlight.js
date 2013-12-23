@@ -4,7 +4,6 @@ http://highlightjs.org/
 */
 
 function() {
-  var self = this;
 
   /* Utility functions */
 
@@ -12,26 +11,26 @@ function() {
     return value.replace(/&/gm, '&amp;').replace(/</gm, '&lt;').replace(/>/gm, '&gt;');
   }
 
-  function blockText(block, ignoreNewLines) {
+  function tag(node) {
+    return node.nodeName.toLowerCase();
+  }
+
+  function blockText(block) {
     return Array.prototype.map.call(block.childNodes, function(node) {
       if (node.nodeType == 3) {
-        return ignoreNewLines ? node.nodeValue.replace(/\n/g, '') : node.nodeValue;
+        return options.useBR ? node.nodeValue.replace(/\n/g, '') : node.nodeValue;
       }
-      if (node.nodeName.toUpperCase () == 'BR') {
+      if (tag(node) == 'br') {
         return '\n';
       }
-      return blockText(node, ignoreNewLines);
+      return blockText(node);
     }).join('');
   }
 
   function blockLanguage(block) {
     var classes = (block.className + ' ' + (block.parentNode ? block.parentNode.className : '')).split(/\s+/);
     classes = classes.map(function(c) {return c.replace(/^language-/, '');});
-    for (var i = 0; i < classes.length; i++) {
-      if (languages[classes[i]] || aliases[classes[i]] || classes[i] == 'no-highlight') {
-        return classes[i];
-      }
-    }
+    return classes.filter(function(c) {return getLanguage(c) || c == 'no-highlight';})[0];
   }
 
   function inherit(parent, obj) {
@@ -52,7 +51,7 @@ function() {
       for (var child = node.firstChild; child; child = child.nextSibling) {
         if (child.nodeType == 3)
           offset += child.nodeValue.length;
-        else if (child.nodeName.toUpperCase() == 'BR')
+        else if (tag(child) == 'br')
           offset += 1;
         else if (child.nodeType == 1) {
           result.push({
@@ -106,11 +105,11 @@ function() {
 
     function open(node) {
       function attr_str(a) {return ' ' + a.nodeName + '="' + escape(a.value) + '"';}
-      result += '<' + node.nodeName.toLowerCase() + Array.prototype.map.call(node.attributes, attr_str).join('') + '>';
+      result += '<' + tag(node) + Array.prototype.map.call(node.attributes, attr_str).join('') + '>';
     }
 
     function close(node) {
-      result += '</' + node.nodeName.toLowerCase() + '>';
+      result += '</' + tag(node) + '>';
     }
 
     function render(event) {
@@ -166,7 +165,7 @@ function() {
         return;
       mode.compiled = true;
 
-      var keywords = []; // used later with beginWithKeyword but filled as a side-effect of keywords compilation
+      mode.keywords = mode.keywords || mode.beginKeywords;
       if (mode.keywords) {
         var compiled_keywords = {};
 
@@ -177,25 +176,23 @@ function() {
           str.split(' ').forEach(function(kw) {
             var pair = kw.split('|');
             compiled_keywords[pair[0]] = [className, pair[1] ? Number(pair[1]) : 1];
-            keywords.push(pair[0]);
           });
         }
 
-        mode.lexemesRe = langRe(mode.lexemes || /[A-Za-z0-9_\\.]+/, true);
+        mode.lexemesRe = langRe(mode.lexemes || /[A-Za-z0-9_\.]+/, true);
         if (typeof mode.keywords == 'string') { // string
           flatten('keyword', mode.keywords);
         } else {
-          for (var className in mode.keywords) {
-            if (!mode.keywords.hasOwnProperty(className))
-              continue;
+          Object.keys(mode.keywords).forEach(function (className) {
             flatten(className, mode.keywords[className]);
-          }
+          });
         }
         mode.keywords = compiled_keywords;
       }
+
       if (parent) {
-        if (mode.beginWithKeyword) {
-          mode.begin = '\\b(' + keywords.join('|') + ')\\b(?!\\.)\\s*';
+        if (mode.beginKeywords) {
+          mode.begin = '\\b(' + mode.beginKeywords.split(/\s+/).join('|') + ')\\b(?!\\.)\\s*';
         }
         mode.beginRe = langRe(mode.begin ? mode.begin : '\\B|\\b');
         if (!mode.end && !mode.endsWithParent)
@@ -285,7 +282,7 @@ function() {
     }
 
     function buildSpan(classname, insideSpan, leaveOpen, noPrefix) {
-      var classPrefix = noPrefix ? '': self.classPrefix,
+      var classPrefix = noPrefix ? '' : options.classPrefix,
           openSpan    = '<span class="' + classPrefix,
           closeSpan   = leaveOpen ? '' : '</span>';
 
@@ -464,17 +461,19 @@ function() {
     detected language, may be absent)
 
   */
-  function highlightAuto(text) {
+  function highlightAuto(text, languageSubset) {
+    languageSubset = languageSubset || options.languages || Object.keys(languages);
     var result = {
       relevance: 0,
       value: escape(text)
     };
     var second_best = result;
-    for (var key in languages) {
-      if (!languages.hasOwnProperty(key))
-        continue;
-      var current = highlight(key, text, false);
-      current.language = key;
+    languageSubset.forEach(function(name) {
+      if (!getLanguage(name)) {
+        return;
+      }
+      var current = highlight(name, text, false);
+      current.language = name;
       if (current.relevance > second_best.relevance) {
         second_best = current;
       }
@@ -482,7 +481,7 @@ function() {
         second_best = result;
         result = current;
       }
-    }
+    });
     if (second_best.language) {
       result.second_best = second_best;
     }
@@ -496,13 +495,13 @@ function() {
   - replace real line-breaks with '<br>' for non-pre containers
 
   */
-  function fixMarkup(value, tabReplace, useBR) {
-    if (tabReplace) {
+  function fixMarkup(value) {
+    if (options.tabReplace) {
       value = value.replace(/^((<[^>]+>|\t)+)/gm, function(match, p1, offset, s) {
-        return p1.replace(/\t/g, tabReplace);
+        return p1.replace(/\t/g, options.tabReplace);
       });
     }
-    if (useBR) {
+    if (options.useBR) {
       value = value.replace(/\n/g, '<br>');
     }
     return value;
@@ -512,8 +511,8 @@ function() {
   Applies highlighting to a DOM node containing code. Accepts a DOM node and
   two optional parameters for fixMarkup.
   */
-  function highlightBlock(block, tabReplace, useBR) {
-    var text = blockText(block, useBR);
+  function highlightBlock(block) {
+    var text = blockText(block);
     var language = blockLanguage(block);
     if (language == 'no-highlight')
         return;
@@ -524,7 +523,7 @@ function() {
       pre.innerHTML = result.value;
       result.value = mergeStreams(original, nodeStream(pre), text);
     }
-    result.value = fixMarkup(result.value, tabReplace, useBR);
+    result.value = fixMarkup(result.value);
 
     block.innerHTML = result.value;
     block.className += ' hljs ' + (!language && result.language || '');
@@ -540,6 +539,20 @@ function() {
     }
   }
 
+  var options = {
+    classPrefix: 'hljs-',
+    tabReplace: null,
+    useBR: false,
+    languages: undefined
+  };
+
+  /*
+  Updates highlight.js global options with values passed in the form of an object
+  */
+  function configure(user_options) {
+    options = inherit(options, user_options);
+  }
+
   /*
   Applies highlighting to all <pre><code>..</code></pre> blocks on a page.
   */
@@ -549,10 +562,7 @@ function() {
     initHighlighting.called = true;
 
     var blocks = document.querySelectorAll('pre code');
-
-    Array.prototype.forEach.call(blocks, function(block){
-      highlightBlock(block, self.tabReplace);
-    });
+    Array.prototype.forEach.call(blocks, highlightBlock);
   }
 
   /*
@@ -567,8 +577,7 @@ function() {
   var aliases = {};
 
   function registerLanguage(name, language) {
-    var lang = languages[name] = language(self);
-
+    var lang = languages[name] = language(this);
     if (lang.aliases) {
       lang.aliases.forEach(function(alias) {aliases[alias] = name;});
     }
@@ -584,9 +593,9 @@ function() {
   this.highlightAuto = highlightAuto;
   this.fixMarkup = fixMarkup;
   this.highlightBlock = highlightBlock;
+  this.configure = configure;
   this.initHighlighting = initHighlighting;
   this.initHighlightingOnLoad = initHighlightingOnLoad;
-  this.classPrefix = 'hljs-';
   this.registerLanguage = registerLanguage;
   this.getLanguage = getLanguage;
   this.inherit = inherit;
@@ -597,7 +606,7 @@ function() {
   this.NUMBER_RE = '\\b\\d+(\\.\\d+)?';
   this.C_NUMBER_RE = '(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)'; // 0x..., 0..., decimal, float
   this.BINARY_NUMBER_RE = '\\b(0b[01]+)'; // 0b...
-  this.RE_STARTERS_RE = '!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~';
+  this.RE_STARTERS_RE = '!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~';
 
   // Common modes
   this.BACKSLASH_ESCAPE = {

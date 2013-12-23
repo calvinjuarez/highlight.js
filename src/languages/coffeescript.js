@@ -93,7 +93,7 @@ function(hljs) {
       hljs.HASH_COMMENT_MODE,
       {
         className: 'function',
-        begin: '(' + JS_IDENT_RE + '\\s*=\\s*)?(\\(.*\\))?\\s*[-=]>', end: '[-=]>',
+        begin: '(' + JS_IDENT_RE + '\\s*=\\s*)?(\\(.*\\))?\\s*\\B[-=]>', end: '[-=]>',
         returnBegin: true,
         contains: [
           TITLE,
@@ -112,14 +112,14 @@ function(hljs) {
       },
       {
         className: 'class',
-        beginWithKeyword: true, keywords: 'class',
+        beginKeywords: 'class',
         end: '$',
-        illegal: '[:\\[\\]]',
+        illegal: /[:="\[\]]/,
         contains: [
           {
-            beginWithKeyword: true, keywords: 'extends',
+            beginKeywords: 'extends',
             endsWithParent: true,
-            illegal: ':',
+            illegal: /[:="\[\]]/,
             contains: [TITLE]
           },
           TITLE
