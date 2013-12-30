@@ -9,7 +9,6 @@ function(hljs) {
     className: 'hexcolor', begin: /#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})/, relevance: 0
   }
   css.COLOR_KEYWORD = { // it'd be nice to include it in CSS and SCSS, too, imo
-    beginWithKeyword: true,
     relevance: 0,
     keywords: {
       color:
@@ -184,8 +183,7 @@ function(hljs) {
     relevance: 2,
     contains: [
       {
-        beginWithKeyword: true,
-        keywords: 'all',
+        beginKeywords: 'all',
       },
       {
         className: 'class',
